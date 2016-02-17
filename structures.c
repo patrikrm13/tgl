@@ -1,20 +1,16 @@
 /* 
     This file is part of tgl-library
-
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License as published by the Free Software Foundation; either
     version 2.1 of the License, or (at your option) any later version.
-
     This library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     Lesser General Public License for more details.
-
     You should have received a copy of the GNU Lesser General Public
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
     Copyright Vitaly Valtman 2013-2015
 */
 
@@ -602,6 +598,8 @@ struct tgl_document *tglf_fetch_alloc_video_new (struct tgl_state *TLS, struct t
   
   tgl_document_insert (TLS, D);
 
+  D->flags = TGLDF_VIDEO;
+
   D->access_hash = DS_LVAL (DS_V->access_hash);
   D->user_id = DS_LVAL (DS_V->user_id);
   D->date = DS_LVAL (DS_V->date);
@@ -954,12 +952,12 @@ void tglf_fetch_message_media_new (struct tgl_state *TLS, struct tgl_message_med
     break;
   case CODE_message_media_video:
   case CODE_message_media_video_l27:
-    M->type = tgl_message_media_document;
+    M->type = tgl_message_media_video;
     M->document = tglf_fetch_alloc_video_new (TLS, DS_MM->video);
     M->caption = DS_STR_DUP (DS_MM->caption);
     break;
   case CODE_message_media_audio:
-    M->type = tgl_message_media_document;
+    M->type = tgl_message_media_audio;
     M->document = tglf_fetch_alloc_audio_new (TLS, DS_MM->audio);
     break;
   case CODE_message_media_document:
@@ -977,10 +975,10 @@ void tglf_fetch_message_media_new (struct tgl_state *TLS, struct tgl_message_med
     M->last_name = DS_STR_DUP (DS_MM->last_name);
     M->user_id = DS_LVAL (DS_MM->user_id);
     break;
-  case CODE_message_media_unsupported:
+  //case CODE_message_media_unsupported:
   //case CODE_message_media_unsupported_l22:
-    M->type = tgl_message_media_unsupported;
-    break;
+  //  M->type = tgl_message_media_unsupported;
+  //  break;
   case CODE_message_media_web_page:
     M->type = tgl_message_media_webpage;
     M->webpage = tglf_fetch_alloc_webpage_new (TLS, DS_MM->webpage);
@@ -992,6 +990,9 @@ void tglf_fetch_message_media_new (struct tgl_state *TLS, struct tgl_message_med
     M->venue.address = DS_STR_DUP (DS_MM->address);
     M->venue.provider = DS_STR_DUP (DS_MM->provider);
     M->venue.venue_id = DS_STR_DUP (DS_MM->venue_id);   
+    break;
+  case CODE_message_media_unsupported:
+    M->type = tgl_message_media_unsupported;
     break;
   default:
     assert (0);
@@ -1761,6 +1762,8 @@ void tgls_free_message_media (struct tgl_state *TLS, struct tgl_message_media *M
     tfree_str (M->last_name);
     return;
   case tgl_message_media_document:
+  case tgl_message_media_video:
+  case tgl_message_media_audio:
     tgls_free_document (TLS, M->document);
     return;
   case tgl_message_media_unsupported:
@@ -2161,7 +2164,7 @@ int tgl_complete_peer_list (struct tgl_state *TLS, int index, const char *text, 
   index ++;
   while (index < TLS->peer_num && (!TLS->Peers[index]->print_name || strncmp (TLS->Peers[index]->print_name, text, len))) {
     index ++;
-      }
+  }
   if (index < TLS->peer_num) {
     *R = strdup (TLS->Peers[index]->print_name);
     assert (*R);
